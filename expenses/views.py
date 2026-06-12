@@ -9,7 +9,7 @@ from urllib.parse import parse_qsl
 from django.conf import settings
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDay, TruncMonth
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponshe
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -355,7 +355,7 @@ def twa_auth(request):
     )
     request.session['telegram_id'] = tg_id
     request.session.modified = True
-    return JsonResponse({'ok': True})
+    return JsonResponse({'ok': True, 'new': not already})
 
 
 def api_add_expense(request):
