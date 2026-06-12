@@ -245,11 +245,8 @@ def detect_currency(text: str) -> str:
         for kw in CURRENCY_MAP[currency]:
             if kw in t:
                 return currency
-    # Heuristic: very large numbers (>= 5000) are likely UZS
-    amount = extract_amount(text)
-    if amount >= 5000:
-        return 'UZS'
-    return 'USD'
+    # Default to UZS (Uzbekistan)
+    return 'UZS'
 
 
 # ─── Description builder ──────────────────────────────────────────────────────
