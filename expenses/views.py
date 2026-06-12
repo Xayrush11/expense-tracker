@@ -226,6 +226,14 @@ def api_stats(request):
 
     total = qs.aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
+    # Totals broken down by currency
+    by_currency = list(
+        qs.values('currency')
+        .annotate(total=Sum('amount'))
+        .order_by('-total')
+    )
+    by_currency_data = [{'currency': c['currency'], 'total': str(c['total'])} for c in by_currency]
+
     by_category = list(
         qs.values('category')
         .annotate(total=Sum('amount'), count=Count('id'))
@@ -251,6 +259,7 @@ def api_stats(request):
         'total': str(total),
         'count': qs.count(),
         'by_category': by_category,
+        'by_currency': by_currency_data,
         'by_day': by_day_data,
     })
 
@@ -353,6 +362,7 @@ def twa_auth(request):
             'first_name': user_data.get('first_name', ''),
         },
     )
+    already = request.session.get('telegram_id') == tg_id
     request.session['telegram_id'] = tg_id
     request.session.modified = True
     return JsonResponse({'ok': True, 'new': not already})
