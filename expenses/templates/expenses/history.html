@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}История — ExpenseAI{% endblock %}
+{% block page_title %}История расходов{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="filters-dark animate-in" style="--delay:.04s">
+  <div class="card-header">
+    <h2 class="card-title" style="color:var(--text-light);font-family:var(--font-display);font-style:italic">
+      <span class="card-title-icon">🔍</span>Фильтры
+    </h2>
+    <span class="card-badge" style="background:rgba(255,255,255,0.05);color:var(--text-ghost);border-color:rgba(255,255,255,0.07)">
+      {{ page.paginator.count }} записей
+    </span>
+  </div>
+  <form method="get" class="filters-wrap">
+    <div class="filter-group">
+      <label class="filter-label">Категория</label>
+      <select name="category" class="filter-select">
+        <option value="">Все категории</option>
+        {% for val, label in categories %}
+        <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Дата с</label>
+      <input type="date" name="date_from" value="{{ date_from }}" class="filter-input">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Дата по</label>
+      <input type="date" name="date_to" value="{{ date_to }}" class="filter-input">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Применить
+      </button>
+      <a href="{% url 'history' %}" class="btn btn-ghost">Сброс</a>
+      <a href="?{{ request.GET.urlencode }}&export=csv" class="btn btn-outline">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="card animate-in" style="--delay:.08s">
+  <div class="table-wrap">
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Описание</th>
+          <th>Категория</th>
+          <th class="text-right">Сумма</th>
+          <th>Вал.</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in page %}
+        <tr class="table-row" id="row-{{ e.pk }}" style="animation-delay:{{ forloop.counter0 }}0ms">
+          <td class="date-cell">{{ e.expense_date }}</td>
+          <td class="desc-cell">
+            <span style="margin-right:7px;font-size:15px">{{ e.category_icon }}</span>{{ e.description }}
+          </td>
+          <td><span class="cat-pill cat-{{ e.category }}">{{ e.category_label }}</span></td>
+          <td class="amount-cell">{{ e.amount }}</td>
+          <td class="currency-cell">{{ e.currency }}</td>
+          <td class="action-cell">
+            <button class="btn-icon" onclick="deleteRow({{ e.pk }}, '{{ e.description|escapejs }}')" title="Удалить">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <span class="empty-icon">📋</span>
+              <span>Расходов не найдено</span>
+              <span class="empty-hint">Измени фильтры или добавь новый расход</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page.has_other_pages %}
+  <div class="pagination">
+    {% if page.has_previous %}
+    <a href="?page={{ page.previous_page_number }}&category={{ category_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="page-btn">← Пред.</a>
+    {% endif %}
+    <span class="page-info">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a href="?page={{ page.next_page_number }}&category={{ category_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="page-btn">След. →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function deleteRow(pk, desc) {
+  if (!confirm(`Удалить «${desc}»?`)) return;
+  const row = document.getElementById('row-' + pk);
+  row.style.transition = 'opacity .25s, transform .25s';
+  row.style.opacity    = '0';
+  row.style.transform  = 'translateX(12px)';
+  const f = document.createElement('form');
+  f.method = 'post'; f.action = `/history/delete/${pk}/`;
+  const c = document.createElement('input');
+  c.type = 'hidden'; c.name = 'csrfmiddlewaretoken'; c.value = '{{ csrf_token }}';
+  f.appendChild(c); document.body.appendChild(f);
+  setTimeout(() => { row.remove(); f.submit(); }, 280);
+}
+</script>
+{% endblock %}

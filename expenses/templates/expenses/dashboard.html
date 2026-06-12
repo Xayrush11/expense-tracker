@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Дашборд — ExpenseAI{% endblock %}
+{% block page_title %}Обзор расходов{% endblock %}
+
+{% block content %}
+
+<!-- Period filter -->
+<div class="period-filter animate-in">
+  <span class="period-label">Период</span>
+  <a href="?period=week"  class="pill {% if period == 'week'  %}active{% endif %}">Неделя</a>
+  <a href="?period=month" class="pill {% if period == 'month' %}active{% endif %}">Месяц</a>
+  <a href="?period=all"   class="pill {% if period == 'all'   %}active{% endif %}">Всё время</a>
+</div>
+
+<!-- Metric cards -->
+<div class="metrics-grid">
+  <div class="metric-card animate-scale" style="--delay:.05s">
+    <div class="metric-top">
+      <div class="metric-icon-wrap">💰</div>
+      <span class="metric-trend" id="trendBadge">—</span>
+    </div>
+    <div class="metric-label">Потрачено</div>
+    <div class="metric-value mono" id="totalVal">—</div>
+    <div class="metric-sub">за выбранный период</div>
+  </div>
+
+  <div class="metric-card animate-scale" style="--delay:.09s">
+    <div class="metric-top">
+      <div class="metric-icon-wrap" style="background:rgba(29,78,216,.08);border-color:rgba(29,78,216,.15)">🔢</div>
+    </div>
+    <div class="metric-label">Транзакций</div>
+    <div class="metric-value mono" id="txVal">—</div>
+    <div class="metric-sub">записей в базе</div>
+  </div>
+
+  <div class="metric-card animate-scale" style="--delay:.13s">
+    <div class="metric-top">
+      <div class="metric-icon-wrap" style="background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.15)">{{ top_cat_icon|default:"⭐" }}</div>
+    </div>
+    <div class="metric-label">Топ категория</div>
+    <div class="metric-value" style="font-size:19px;font-family:var(--font-main)">{{ top_cat_label|default:"—" }}</div>
+    <div class="metric-sub">наибольшие траты</div>
+  </div>
+
+  <div class="metric-card animate-scale" style="--delay:.17s">
+    <div class="metric-top">
+      <div class="metric-icon-wrap" style="background:rgba(109,40,217,.08);border-color:rgba(109,40,217,.15)">🎙️</div>
+    </div>
+    <div class="metric-label">Голосовых записей</div>
+    <div class="metric-value mono" id="voiceVal">{{ voice_count }}</div>
+    <div class="metric-sub">через Telegram бот</div>
+  </div>
+</div>
+
+<!-- Voice bot guide -->
+<div class="voice-guide-card animate-in" style="--delay:.2s">
+  <div class="vg-left">
+    <div class="vg-mic-pulse">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="4" width="12" height="20" rx="6" fill="currentColor" opacity=".9"/>
+        <path d="M8 20c0 6.627 5.373 12 12 12s12-5.373 12-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="20" y1="32" x2="20" y2="38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="14" y1="38" x2="26" y2="38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="vg-headline">Говори — бот запишет</div>
+    <div class="vg-sub">Отправь голосовое сообщение в Telegram и расход появится здесь автоматически</div>
+    <a href="https://t.me/newproject1313_bot" target="_blank" class="vg-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.94 8.19l-2.02 9.52c-.14.65-.52.81-1.06.5l-2.93-2.16-1.41 1.36c-.16.16-.29.29-.59.29l.21-2.97 5.38-4.86c.23-.21-.05-.32-.36-.11L7.28 14.42l-2.89-.9c-.63-.2-.64-.63.13-.93l11.28-4.35c.52-.19.98.12.82.92-.01.01-.01.01-.68 3.03z"/></svg>
+      Открыть бота
+    </a>
+  </div>
+  <div class="vg-right">
+    <div class="vg-title">Примеры голосовых команд</div>
+    <div class="vg-examples">
+      <div class="vg-ex">
+        <span class="vg-ex-icon">🍽️</span>
+        <div class="vg-ex-body">
+          <span class="vg-ex-phrase">«Потратил пятьдесят тысяч сум на обед»</span>
+          <span class="vg-ex-result">→ Еда · 50 000 UZS</span>
+        </div>
+      </div>
+      <div class="vg-ex">
+        <span class="vg-ex-icon">🚖</span>
+        <div class="vg-ex-body">
+          <span class="vg-ex-phrase">«Такси двадцать долларов»</span>
+          <span class="vg-ex-result">→ Транспорт · 20 USD</span>
+        </div>
+      </div>
+      <div class="vg-ex">
+        <span class="vg-ex-icon">🛍️</span>
+        <div class="vg-ex-body">
+          <span class="vg-ex-phrase">«Купил кроссовки 150 000 сум»</span>
+          <span class="vg-ex-result">→ Покупки · 150 000 UZS</span>
+        </div>
+      </div>
+      <div class="vg-ex">
+        <span class="vg-ex-icon">💊</span>
+        <div class="vg-ex-body">
+          <span class="vg-ex-phrase">«Аптека сто тысяч»</span>
+          <span class="vg-ex-result">→ Здоровье · 100 000 UZS</span>
+        </div>
+      </div>
+    </div>
+    <div class="vg-tip">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Говори чётко: сумму + валюту + категорию
+    </div>
+  </div>
+</div>
+
+<!-- Charts + categories -->
+<div class="two-col">
+  <div class="card animate-in" style="--delay:.22s">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">📊</span>Расходы по дням</h2>
+      <span class="card-badge" id="chartBadge">загрузка...</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="barChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card animate-in" style="--delay:.26s">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">🏷️</span>По категориям</h2>
+    </div>
+    <div class="category-list">
+      {% for c in category_data %}
+      <div class="cat-row">
+        <div class="cat-meta">
+          <span class="cat-icon">{{ c.icon }}</span>
+          <span class="cat-label">{{ c.label }}</span>
+          <span class="cat-amount">{{ c.total }}</span>
+          <span class="cat-pct">{{ c.pct }}%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" data-w="{{ c.pct }}"></div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state">
+        <span class="empty-icon">🎙️</span>
+        <span>Отправь голосовое боту — данные появятся здесь</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Activity feed -->
+<div class="card animate-in" style="--delay:.3s">
+  <div class="card-header">
+    <h2 class="card-title"><span class="card-title-icon">🕐</span>Последние операции</h2>
+    <a href="{% url 'history' %}" class="card-link">Все →</a>
+  </div>
+  <div class="activity-feed">
+    {% for e in recent %}
+    <div class="activity-item">
+      <div class="activity-icon">{{ e.category_icon }}</div>
+      <div class="activity-body">
+        <span class="activity-desc">{{ e.description }}</span>
+        <div class="activity-meta">
+          <span>{{ e.expense_date }}</span>
+          <span>·</span>
+          <span class="activity-cat">{{ e.category_label }}</span>
+        </div>
+      </div>
+      <div class="activity-amount">
+        <span class="amount-val">{{ e.amount }}</span>
+        <span class="amount-cur">{{ e.currency }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="padding:50px 0">
+      <span class="empty-icon">📭</span>
+      <span>Нет операций за этот период</span>
+      <span class="empty-hint">Добавь расход выше или отправь голосовое боту</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Animate progress bars
+setTimeout(() => {
+  document.querySelectorAll('.progress-bar[data-w]').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 250);
+
+// Load API + animate counters
+(async () => {
+  const [statsRes, monthlyRes] = await Promise.all([
+    fetch('/api/expenses/stats/?period={{ period }}'),
+    fetch('/api/expenses/monthly/'),
+  ]);
+  const stats   = await statsRes.json();
+  const monthly = await monthlyRes.json();
+
+  // Counters
+  animateNumber(document.getElementById('totalVal'), parseFloat(stats.total)||0, 1200);
+  animateNumber(document.getElementById('txVal'),    stats.count||0, 900);
+
+  // Trend badge
+  const badge = document.getElementById('trendBadge');
+  if (monthly.diff_pct !== 0) {
+    badge.textContent = (monthly.diff_pct > 0 ? '+' : '') + monthly.diff_pct + '%';
+    if (monthly.diff_pct > 0) badge.classList.add('down');
+  }
+
+  // Chart label
+  document.getElementById('chartBadge').textContent =
+    `${stats.count} записей`;
+
+  // Bar chart
+  const labels = stats.by_day.map(d => {
+    const dt = new Date(d.day);
+    return dt.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+  });
+  const values = stats.by_day.map(d => parseFloat(d.total));
+
+  if (!values.length) return;
+
+  const ctx  = document.getElementById('barChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 260);
+  grad.addColorStop(0, 'rgba(196,30,58,0.9)');
+  grad.addColorStop(1, 'rgba(139,26,26,0.4)');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: grad,
+        borderColor: '#C41E3A',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 900, easing: 'easeOutQuart' },
+      plugins: { legend:{ display:false }, tooltip: CHART_OPTS.tooltip },
+      scales: CHART_OPTS.scales,
+    }
+  });
+})();
+
+</script>
+{% endblock %}

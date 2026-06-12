@@ -1,0 +1,16 @@
+Watching for file changes with StatReloader
+[12/Jun/2026 19:07:08] "GET / HTTP/1.1" 200 20369
+[12/Jun/2026 19:07:08,968] - Broken pipe from ('127.0.0.1', 60481)
+[12/Jun/2026 19:07:17] "GET / HTTP/1.1" 200 20369
+[12/Jun/2026 19:07:17] "GET /static/css/style.css HTTP/1.1" 200 39423
+[12/Jun/2026 19:07:19] "GET /api/expenses/stats/?period=month HTTP/1.1" 200 463
+[12/Jun/2026 19:07:19] "GET /api/expenses/monthly/ HTTP/1.1" 200 1205
+[12/Jun/2026 19:07:23] "GET /?period=week HTTP/1.1" 200 20368
+[12/Jun/2026 19:07:23] "GET /static/css/style.css HTTP/1.1" 304 0
+[12/Jun/2026 19:07:24] "GET /api/expenses/stats/?period=week HTTP/1.1" 200 463
+[12/Jun/2026 19:07:24] "GET /api/expenses/monthly/ HTTP/1.1" 200 1205
+Not Found: /favicon.ico
+[12/Jun/2026 19:07:24] "GET /favicon.ico HTTP/1.1" 404 3979
+[12/Jun/2026 19:07:30] "GET /?period=week HTTP/1.1" 200 20368
+[12/Jun/2026 19:07:30] "GET /api/expenses/monthly/ HTTP/1.1" 200 1205
+[12/Jun/2026 19:07:30] "GET /api/expenses/stats/?period=week HTTP/1.1" 200 463

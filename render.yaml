@@ -1,0 +1,42 @@
+services:
+  # ── Django web app ──────────────────────────────────────────────
+  - type: web
+    name: expense-web
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn expense_tracker.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: RENDER_EXTERNAL_HOSTNAME
+        fromService:
+          type: web
+          name: expense-web
+          property: host
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false          # ← ты введёшь вручную в Render dashboard
+      - key: WEB_APP_URL
+        sync: false          # ← вставишь URL сайта после первого деплоя
+
+  # ── Telegram bot (background worker) ────────────────────────────
+  - type: worker
+    name: expense-bot
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python -m bot.bot"
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: expense-web
+          envVarKey: SECRET_KEY
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: WEB_APP_URL
+        sync: false
+      - key: DEBUG
+        value: "False"

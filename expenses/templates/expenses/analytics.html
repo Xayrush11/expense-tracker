@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Аналитика — ExpenseAI{% endblock %}
+{% block page_title %}Аналитика{% endblock %}
+
+{% block content %}
+
+<!-- KPI -->
+<div class="metrics-grid" id="kpiRow">
+  <div class="metric-card skeleton" style="min-height:120px"></div>
+  <div class="metric-card skeleton" style="min-height:120px;animation-delay:.08s"></div>
+  <div class="metric-card skeleton" style="min-height:120px;animation-delay:.16s"></div>
+  <div class="metric-card skeleton" style="min-height:120px;animation-delay:.24s"></div>
+</div>
+
+<!-- Charts -->
+<div class="two-col-equal animate-in" style="--delay:.1s">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">📈</span>По месяцам</h2>
+      <span class="card-badge">6 месяцев</span>
+    </div>
+    <div class="chart-wrap chart-wrap-tall">
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">🍩</span>Категории</h2>
+    </div>
+    <div class="chart-wrap pie-wrap">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison + Top-5 -->
+<div class="two-col-equal animate-in" style="--delay:.18s">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">⚖️</span>Месяц к месяцу</h2>
+    </div>
+    <div id="compBlock" class="comparison-block">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line short"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-title-icon">🏆</span>Топ-5</h2>
+      <span class="card-badge">этот месяц</span>
+    </div>
+    <div id="top5Block" class="top5-list">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line short"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(async () => {
+  const [stats, monthly] = await Promise.all([
+    fetch('/api/expenses/stats/?period=month').then(r => r.json()),
+    fetch('/api/expenses/monthly/').then(r => r.json()),
+  ]);
+
+  const diffSign  = monthly.diff_pct >= 0 ? '+' : '';
+  const diffGreen = monthly.diff_pct <= 0;
+  const diffColor = diffGreen ? '#2D9B6F' : '#C41E3A';
+  const diffEmoji = diffGreen ? '📉' : '📈';
+
+  // ── KPI ──────────────────────────────────────────────────────
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="metric-card animate-scale" style="--delay:.04s">
+      <div class="metric-top"><div class="metric-icon-wrap">💰</div></div>
+      <div class="metric-label">Этот месяц</div>
+      <div class="metric-value mono" id="km1">0</div>
+    </div>
+    <div class="metric-card animate-scale" style="--delay:.08s">
+      <div class="metric-top"><div class="metric-icon-wrap" style="background:rgba(29,78,216,.08);border-color:rgba(29,78,216,.15)">📅</div></div>
+      <div class="metric-label">Прошлый месяц</div>
+      <div class="metric-value mono" id="km2">0</div>
+    </div>
+    <div class="metric-card animate-scale" style="--delay:.12s">
+      <div class="metric-top"><div class="metric-icon-wrap" style="background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.06)">${diffEmoji}</div></div>
+      <div class="metric-label">Изменение</div>
+      <div class="metric-value mono" style="color:${diffColor}">${diffSign}${monthly.diff_pct}%</div>
+      <div class="metric-sub">${diffGreen ? 'Экономия' : 'Рост расходов'}</div>
+    </div>
+    <div class="metric-card animate-scale" style="--delay:.16s">
+      <div class="metric-top"><div class="metric-icon-wrap" style="background:rgba(109,40,217,.08);border-color:rgba(109,40,217,.15)">🔢</div></div>
+      <div class="metric-label">Транзакций</div>
+      <div class="metric-value mono" id="km4">0</div>
+      <div class="metric-sub">в этом месяце</div>
+    </div>
+  `;
+  setTimeout(() => {
+    animateNumber(document.getElementById('km1'), parseFloat(monthly.this_month)||0, 1200);
+    animateNumber(document.getElementById('km2'), parseFloat(monthly.prev_month)||0, 1200);
+    animateNumber(document.getElementById('km4'), stats.count||0, 900);
+  }, 200);
+
+  // ── Line chart ────────────────────────────────────────────────
+  const lineCtx  = document.getElementById('lineChart').getContext('2d');
+  const lineGrad = lineCtx.createLinearGradient(0, 0, 0, 310);
+  lineGrad.addColorStop(0, 'rgba(196,30,58,0.18)');
+  lineGrad.addColorStop(1, 'rgba(196,30,58,0.0)');
+
+  new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: monthly.monthly.map(m => m.label),
+      datasets: [{
+        data: monthly.monthly.map(m => parseFloat(m.total)),
+        borderColor: '#C41E3A', backgroundColor: lineGrad,
+        pointBackgroundColor: '#C41E3A', pointBorderColor: '#F8F4F1',
+        pointRadius: 5, pointHoverRadius: 7,
+        tension: 0.4, fill: true, borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
+      plugins: { legend:{ display:false }, tooltip: CHART_OPTS.tooltip },
+      scales: CHART_OPTS.scales,
+    }
+  });
+
+  // ── Pie chart ─────────────────────────────────────────────────
+  new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: stats.by_category.map(c => `${c.icon} ${c.label}`),
+      datasets: [{
+        data: stats.by_category.map(c => parseFloat(c.total)),
+        backgroundColor: CHART_COLORS,
+        borderColor: '#F8F4F1',
+        borderWidth: 2, hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '64%',
+      animation: { duration: 900 },
+      plugins: {
+        legend: { position:'bottom', labels:{ color:'#9E8080', font:{family:'JetBrains Mono', size:11}, padding:14, boxWidth:10 } },
+        tooltip: CHART_OPTS.tooltip,
+      }
+    }
+  });
+
+  // ── Comparison ────────────────────────────────────────────────
+  const diff    = (parseFloat(monthly.this_month) - parseFloat(monthly.prev_month)).toFixed(2);
+  const absDiff = Math.abs(parseFloat(diff)).toFixed(2);
+  const arrow   = monthly.diff_pct > 0 ? '▲' : monthly.diff_pct < 0 ? '▼' : '—';
+
+  document.getElementById('compBlock').innerHTML = `
+    <div class="comparison-row">
+      <span class="comparison-label">Этот месяц</span>
+      <span class="comparison-val" style="color:var(--red)">$${parseFloat(monthly.this_month).toFixed(2)}</span>
+    </div>
+    <div class="comparison-row">
+      <span class="comparison-label">Прошлый месяц</span>
+      <span class="comparison-val">$${parseFloat(monthly.prev_month).toFixed(2)}</span>
+    </div>
+    <div class="comparison-divider"></div>
+    <div class="comparison-delta">
+      <span class="delta-arrow" style="color:${diffColor}">${arrow}</span>
+      <span class="mono" style="color:${diffColor};font-weight:700;font-size:16px">$${absDiff}</span>
+      <span class="mono" style="color:${diffColor}">(${diffSign}${monthly.diff_pct}%)</span>
+      <span class="comparison-hint">${diffGreen ? '🎉 Тратишь меньше' : '⚠️ Тратишь больше'}</span>
+    </div>
+  `;
+
+  // ── Top-5 ─────────────────────────────────────────────────────
+  const medals = ['🥇','🥈','🥉','#4','#5'];
+  document.getElementById('top5Block').innerHTML = monthly.top5.length
+    ? monthly.top5.map((t, i) => `
+        <div class="top5-row">
+          <span class="top5-rank">${medals[i]}</span>
+          <span class="top5-icon">${t.icon}</span>
+          <span class="top5-desc">${t.description}</span>
+          <span class="top5-amount">$${parseFloat(t.amount).toFixed(2)}</span>
+        </div>`).join('')
+    : '<div class="empty-state"><span class="empty-icon">🏆</span><span>Нет данных</span></div>';
+})();
+</script>
+{% endblock %}
