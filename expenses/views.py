@@ -9,7 +9,7 @@ from urllib.parse import parse_qsl
 from django.conf import settings
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDay, TruncMonth
-from django.http import JsonResponse, HttpResponshe
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.core.paginator import Paginator
