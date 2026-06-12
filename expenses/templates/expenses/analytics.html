@@ -160,16 +160,16 @@
   document.getElementById('compBlock').innerHTML = `
     <div class="comparison-row">
       <span class="comparison-label">Этот месяц</span>
-      <span class="comparison-val" style="color:var(--red)">$${parseFloat(monthly.this_month).toFixed(2)}</span>
+      <span class="comparison-val" style="color:var(--red)">${parseFloat(monthly.this_month).toLocaleString('ru-RU')} сум</span>
     </div>
     <div class="comparison-row">
       <span class="comparison-label">Прошлый месяц</span>
-      <span class="comparison-val">$${parseFloat(monthly.prev_month).toFixed(2)}</span>
+      <span class="comparison-val">${parseFloat(monthly.prev_month).toLocaleString('ru-RU')} сум</span>
     </div>
     <div class="comparison-divider"></div>
     <div class="comparison-delta">
       <span class="delta-arrow" style="color:${diffColor}">${arrow}</span>
-      <span class="mono" style="color:${diffColor};font-weight:700;font-size:16px">$${absDiff}</span>
+      <span class="mono" style="color:${diffColor};font-weight:700;font-size:16px">${parseFloat(absDiff).toLocaleString('ru-RU')} сум</span>
       <span class="mono" style="color:${diffColor}">(${diffSign}${monthly.diff_pct}%)</span>
       <span class="comparison-hint">${diffGreen ? '🎉 Тратишь меньше' : '⚠️ Тратишь больше'}</span>
     </div>
@@ -183,7 +183,7 @@
           <span class="top5-rank">${medals[i]}</span>
           <span class="top5-icon">${t.icon}</span>
           <span class="top5-desc">${t.description}</span>
-          <span class="top5-amount">$${parseFloat(t.amount).toFixed(2)}</span>
+          <span class="top5-amount">${parseFloat(t.amount).toLocaleString('ru-RU')} ${t.currency === 'USD' ? '$' : t.currency === 'RUB' ? '₽' : 'сум'}</span>
         </div>`).join('')
     : '<div class="empty-state"><span class="empty-icon">🏆</span><span>Нет данных</span></div>';
 })();
