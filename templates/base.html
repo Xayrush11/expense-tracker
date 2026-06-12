@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  {% block extra_head %}{% endblock %}
+  {% block extra_head %}{% endblock %}h
   <!-- Telegram Mini App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -188,7 +188,7 @@ window.CHART_COLORS = ['#C41E3A','#8B1A1A','#1D4ED8','#D97706','#6D28D9','#04785
   })
   .then(r => r.json())
   .then(data => {
-    if (data.ok) location.reload();
+    if (data.ok && data.new) location.reload();
   })
   .catch(() => {});
 })();
